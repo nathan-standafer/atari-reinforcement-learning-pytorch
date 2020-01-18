@@ -10,25 +10,25 @@ class AtariEnv():
         self.env = gym.make(environment_name)
         self.env.reset()
         self.step_number = 0
-        self.frames = deque()
+        self.frame_buffer = deque()
 
     def step(self, action):
         self.env.render()
         img_array, reward_float, done_bool, info_dict = self.env.step(action)
         atari_frame = AtariFrame(img_array, self.step_number, reward_float, done_bool, info_dict, action)
-        self.frames.append(atari_frame)
+        self.frame_buffer.append(atari_frame)
         self.step_number += 1
         return atari_frame
 
     def close(self):
         self.env.close()
 
-    def get_discounted_rewards(self, discount_rate=0.95):
-        discounted_rewards = np.zeros(len(self.frames))
+    def get_discounted_rewards(self, discount_rate=0.97):
+        discounted_rewards = np.zeros(len(self.frame_buffer))
         
         cumulative_rewards = 0
-        for step in reversed(range(len(self.frames))):
-            this_frame = self.frames[step]
+        for step in reversed(range(len(self.frame_buffer))):
+            this_frame = self.frame_buffer[step]
             cumulative_rewards = this_frame.reward + cumulative_rewards * discount_rate
             discounted_rewards[step] = cumulative_rewards
         
@@ -38,17 +38,27 @@ class AtariEnv():
         if reward_std != 0:
             all_rewards = [(discounted_reward - reward_mean)/reward_std for discounted_reward in discounted_rewards]
         else:
-            all_rewards = discounted_rewards
+            # no points were granted  its all bad
+            print("no points granted. Setting all discounted rewards to -1")
+            all_rewards = [-1 for discounted_reward in discounted_rewards]
         
-        for (frame, reward) in zip(self.frames, all_rewards):
+        for (frame, reward) in zip(self.frame_buffer, all_rewards):
             frame.discounted_reward = reward
 
         return all_rewards
 
+    def get_total_score(self):
+        total_score = 0
+        for frame in self.frame_buffer:
+            total_score += frame.reward
+
+        return total_score
+
 
 class AtariFrame():
     discounted_reward = 0
-
+    action_array = None
+    
     def __init__(self, img_array, frame_index, reward, done_bool, info_dict, action_taken):
         self.img_array = img_array
         self.frame_index = frame_index
