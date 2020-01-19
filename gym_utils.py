@@ -44,10 +44,10 @@ class AtariEnv():
             print("no points granted. Setting all discounted rewards to -1")
             all_rewards = [-1 for discounted_reward in discounted_rewards]
         
+        all_rewards = np.roll(all_rewards, self.reward_shift)
+
         for (frame, reward) in zip(self.frame_buffer, all_rewards):
             frame.discounted_reward = reward
-
-        all_rewards = np.roll(all_rewards, self.reward_shift)
 
         return all_rewards
 
