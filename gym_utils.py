@@ -5,12 +5,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class AtariEnv():
-    def __init__(self, environment_name):
+
+    def __init__(self, environment_name, reward_shift):
         self.environment_name = environment_name
         self.env = gym.make(environment_name)
         self.env.reset()
         self.step_number = 0
         self.frame_buffer = deque()
+        self.reward_shift = reward_shift
 
     def step(self, action):
         self.env.render()
@@ -25,7 +27,7 @@ class AtariEnv():
 
     def get_discounted_rewards(self, discount_rate=0.97):
         discounted_rewards = np.zeros(len(self.frame_buffer))
-        
+
         cumulative_rewards = 0
         for step in reversed(range(len(self.frame_buffer))):
             this_frame = self.frame_buffer[step]
@@ -44,6 +46,8 @@ class AtariEnv():
         
         for (frame, reward) in zip(self.frame_buffer, all_rewards):
             frame.discounted_reward = reward
+
+        all_rewards = np.roll(all_rewards, self.reward_shift)
 
         return all_rewards
 
@@ -91,9 +95,9 @@ class AtariFrame():
 
 
 
-environment_name = "Pong-v0"
-atari_env = AtariEnv(environment_name)
-print(atari_env.env.action_space)
+# environment_name = "Pong-v0"
+# atari_env = AtariEnv(environment_name, 0)
+# print(atari_env.env.action_space)
 
 
 # for i in range(500):
