@@ -58,7 +58,7 @@ class AtariEnv():
 class AtariFrame():
     discounted_reward = 0
     action_array = None
-    
+
     def __init__(self, img_array, frame_index, reward, done_bool, info_dict, action_taken):
         self.img_array = img_array
         self.frame_index = frame_index
@@ -91,8 +91,11 @@ class AtariFrame():
 
 
 
-# environment_name = "SpaceInvaders-v0"
-# atari_env = AtariEnv(environment_name)
+environment_name = "Pong-v0"
+atari_env = AtariEnv(environment_name)
+print(atari_env.env.action_space)
+
+
 # for i in range(500):
 #     atari_env.step(3)
 
