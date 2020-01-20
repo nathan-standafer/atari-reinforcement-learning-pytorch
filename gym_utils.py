@@ -51,6 +51,15 @@ class AtariEnv():
 
         return all_rewards
 
+    def get_actions_taken(self):
+        n_actions = self.env.action_space.n
+        actions_taken = np.zeros(n_actions)
+        for step in range(len(self.frame_buffer)): 
+            this_frame = self.frame_buffer[step]
+            this_action = this_frame.action_taken
+            actions_taken[this_action] += 1
+        return actions_taken
+
     def get_total_score(self):
         total_score = 0
         for frame in self.frame_buffer:
