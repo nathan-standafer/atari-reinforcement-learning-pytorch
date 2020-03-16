@@ -51,6 +51,9 @@ class AtariEnv():
 
         return all_rewards
 
+
+
+
     def get_actions_taken(self):
         n_actions = self.env.action_space.n
         actions_taken = np.zeros(n_actions)
