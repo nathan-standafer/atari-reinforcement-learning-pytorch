@@ -6,18 +6,18 @@ import numpy as np
 
 
 class AtariEnv():
-    def __init__(self, environment_name):
+    def __init__(self, environment_name, frame_buffer_size=4000):
         self.environment_name = environment_name
         self.env = gym.make(environment_name)
         self.env.reset()
         self.step_number = 0
-        self.frame_buffer = deque()
+        self.frame_buffer = deque(maxlen=frame_buffer_size)
 
     def step(self, action):
         self.env.render()
         #take 4 steps with the same action
 
-        img_array    = []
+        next_img_array = []
         reward_float = []
         done_bool    = []
         info_dict    = []
@@ -26,13 +26,19 @@ class AtariEnv():
             img_array_step, reward_float_step, done_bool_step, info_dict_step = self.env.step(action)
             if done_bool_step:
                 is_done = True
-            img_array.append(img_array_step)
+            next_img_array.append(img_array_step)
             reward_float.append(reward_float_step)
             done_bool.append(done_bool_step)
             info_dict.append(info_dict_step)
 
         if not is_done:
-            atari_frame = AtariFrame(img_array, self.step_number, reward_float, done_bool, info_dict, action)
+            if len(self.frame_buffer) > 0:
+                previous_atari_frame = self.frame_buffer[-1]
+                img_array_list = previous_atari_frame.next_img_array_list
+            else:
+                img_array_list = next_img_array
+
+            atari_frame = AtariFrame(img_array_list, next_img_array, self.step_number, reward_float, done_bool, info_dict, action)
             self.frame_buffer.append(atari_frame)
             self.step_number += 1
             return atari_frame
@@ -63,8 +69,9 @@ class AtariFrame():
     discounted_reward = 0
     action_array = None
 
-    def __init__(self, img_array_list, frame_index, reward_list, done_bool_list, info_dict_list, action_taken):
+    def __init__(self, img_array_list, next_img_array_list, frame_index, reward_list, done_bool_list, info_dict_list, action_taken):
         self.img_array_list = img_array_list
+        self.next_img_array_list = next_img_array_list
         self.frame_index = frame_index
         self.reward_list = reward_list
         self.done_bool_list = done_bool_list
@@ -73,6 +80,12 @@ class AtariFrame():
 
     def process_img_array(self, frame_index):
         img = self.img_array_list[frame_index]
+        img = img.mean(axis=2)  # to greyscale
+        img = img / 256.0  # normalize from 0 to 1.
+        return img
+
+    def process_next_img_array(self, frame_index):
+        img = self.next_img_array_list[frame_index]
         img = img.mean(axis=2)  # to greyscale
         img = img / 256.0  # normalize from 0 to 1.
         return img
@@ -93,6 +106,14 @@ class AtariFrame():
             frames[i] = self.process_img_array(i)
         return frames
 
+    def get_next_processed_frames(self):
+        processed_frames_shape = (len(self.next_img_array_list), 210, 160)
+        frames = np.zeros(processed_frames_shape)
+        for i in range(len(self.next_img_array_list)):
+            #print("self.img_array_list[{}].shape: {}".format(i, self.img_array_list[i].shape))
+            frames[i] = self.process_next_img_array(i)
+        return frames
+
     def getReward(self):
         return np.sum(self.reward_list)
 
@@ -104,7 +125,11 @@ class AtariFrame():
         plt.axis("off")
         plt.show()
 
-
+    def isFinalFrame(self):
+        for done_bool in self.done_bool_list:
+            if done_bool:
+                return True
+        return False
 
         # environment_name = "Pong-v0"
 
