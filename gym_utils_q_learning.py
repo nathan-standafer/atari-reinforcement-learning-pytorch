@@ -6,12 +6,14 @@ import numpy as np
 
 
 class AtariEnv():
-    def __init__(self, environment_name, frame_buffer_size=4000):
+    def __init__(self, environment_name, frame_buffer_size=25000):
         self.environment_name = environment_name
         self.env = gym.make(environment_name)
         self.env.reset()
         self.step_number = 0
         self.frame_buffer = deque(maxlen=frame_buffer_size)
+        self.current_score = 0
+        self.global_step_counter = 0
 
     def step(self, action):
         self.env.render()
@@ -28,8 +30,13 @@ class AtariEnv():
                 is_done = True
             next_img_array.append(img_array_step)
             reward_float.append(reward_float_step)
+            self.current_score += reward_float_step
             done_bool.append(done_bool_step)
             info_dict.append(info_dict_step)
+
+            self.global_step_counter += 1
+            if self.global_step_counter % 3 == 0:
+                self.env.render() #show even and odd frames
 
         if not is_done:
             if len(self.frame_buffer) > 0:
@@ -47,6 +54,10 @@ class AtariEnv():
 
     def close(self):
         self.env.close()
+
+    def reset(self):
+        self.current_score = 0
+        self.env.reset()
 
     def get_actions_taken(self):
         n_actions = self.env.action_space.n
