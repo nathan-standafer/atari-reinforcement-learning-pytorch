@@ -6,7 +6,7 @@ import numpy as np
 
 
 class AtariEnv():
-    def __init__(self, environment_name, frame_buffer_size=25000):
+    def __init__(self, environment_name, frame_buffer_size=22500):
         self.environment_name = environment_name
         self.env = gym.make(environment_name)
         self.env.reset()
@@ -15,22 +15,30 @@ class AtariEnv():
         self.current_score = 0
         self.global_step_counter = 0
 
-    def step(self, action):
-        self.env.render()
+    def step(self, action, save_step=True):
         #take 4 steps with the same action
-
         next_img_array = []
         reward_float = []
         done_bool    = []
         info_dict    = []
         is_done = False
+
         for i in range(4):
             img_array_step, reward_float_step, done_bool_step, info_dict_step = self.env.step(action)
-            if done_bool_step:
+            lives = info_dict_step['ale.lives']
+
+            if done_bool_step: # or lives == 2:
                 is_done = True
+                self.frame_buffer[-1].reward_list[-1] = -5.0 #negative reward for death
             next_img_array.append(img_array_step)
-            reward_float.append(reward_float_step)
-            self.current_score += reward_float_step
+            if reward_float_step > 0.0:
+                clipped_reward = 1.0
+            elif reward_float_step < 0.0:
+                clipped_reward = -1.0
+            else:
+                clipped_reward = 0.0
+            reward_float.append(clipped_reward)
+            self.current_score += clipped_reward
             done_bool.append(done_bool_step)
             info_dict.append(info_dict_step)
 
@@ -46,7 +54,8 @@ class AtariEnv():
                 img_array_list = next_img_array
 
             atari_frame = AtariFrame(img_array_list, next_img_array, self.step_number, reward_float, done_bool, info_dict, action)
-            self.frame_buffer.append(atari_frame)
+            if save_step:
+                self.frame_buffer.append(atari_frame)
             self.step_number += 1
             return atari_frame
 
