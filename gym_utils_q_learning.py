@@ -43,7 +43,7 @@ class AtariEnv():
             info_dict.append(info_dict_step)
 
             self.global_step_counter += 1
-            if self.global_step_counter % 3 == 0:
+            if self.global_step_counter % 1 == 0:
                 self.env.render() #show even and odd frames
 
         if not is_done:

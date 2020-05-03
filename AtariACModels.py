@@ -67,7 +67,8 @@ class AtariCriticModel(nn.Module):
         self.fc1 = nn.Linear(64 * 26 * 19, 256)
         self.fc2 = nn.Linear(256 + action_count, 256)
         self.bn2 = nn.BatchNorm1d(256)
-        self.out = nn.Linear(256, action_count)
+        #self.out = nn.Linear(256, action_count)
+        self.out = nn.Linear(256, 1)
 
     def forward(self, img_array, actions):
         batch_size = img_array.size(0)
