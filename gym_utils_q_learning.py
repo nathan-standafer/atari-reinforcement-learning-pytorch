@@ -6,7 +6,7 @@ import numpy as np
 
 
 class AtariEnv():
-    def __init__(self, environment_name, frame_buffer_size=22500):
+    def __init__(self, environment_name, frame_buffer_size=20000):
         self.environment_name = environment_name
         self.env = gym.make(environment_name)
         self.env.reset()
