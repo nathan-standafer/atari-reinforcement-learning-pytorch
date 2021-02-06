@@ -42,7 +42,8 @@ class AtariActorModel(nn.Module):
 
         # fc layers
         # x = self.dropout(x)
-        x = F.relu(self.bn1(self.fc1(x)))
+        #x = F.relu(self.bn1(self.fc1(x)))
+        x = self.bn1(self.fc1(x))  #no combining relu with softmax!!!!
 
         x = torch.softmax(self.out(x), dim=1)
 
